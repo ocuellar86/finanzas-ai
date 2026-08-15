@@ -112,15 +112,41 @@ ACTIVOS = {
 @st.cache_data(ttl=900)
 def obtener_historial(ticker, periodo):
 
-    activo = yf.Ticker(ticker)
+    try:
 
-    datos = activo.history(
-        period=periodo,
-        interval="1d",
-        auto_adjust=True
-    )
+        datos = yf.download(
+            ticker,
+            period=periodo,
+            interval="1d",
+            auto_adjust=True,
+            progress=False,
+            threads=False
+        )
 
-    return datos
+        if datos is None:
+            return pd.DataFrame()
+
+        if datos.empty:
+            return pd.DataFrame()
+
+        # En algunas versiones de yfinance
+        # las columnas pueden venir como MultiIndex.
+        if isinstance(datos.columns, pd.MultiIndex):
+
+            try:
+                datos.columns = datos.columns.get_level_values(0)
+            except Exception:
+                pass
+
+        return datos
+
+    except Exception as e:
+
+        st.error(
+            f"Error al obtener datos de Yahoo Finance: {e}"
+        )
+
+        return pd.DataFrame()
 
 
 @st.cache_data(ttl=900)
@@ -430,13 +456,20 @@ if analizar:
             ticker
         )
 
-    if datos.empty:
+if datos.empty:
 
-        st.error(
-            "No se encontraron datos para este activo."
-        )
+    st.error(
+        f"No se encontraron datos para {ticker}."
+    )
 
-        st.stop()
+    st.warning(
+        """
+        Yahoo Finance no devolvió información para este ticker.
+        Verifica el ticker o intenta nuevamente.
+        """
+    )
+
+    st.stop()
 
     datos = calcular_indicadores(datos)
 
