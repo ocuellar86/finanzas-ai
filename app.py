@@ -378,6 +378,24 @@ def analizar_con_ia(ticker, metricas, fundamentales):
 
 st.title("📊 Finanzas AI")
 
+st.write("🔧 PRUEBA DE CONEXIÓN A YAHOO FINANCE")
+
+try:
+    prueba = yf.download(
+        "AAPL",
+        period="5d",
+        interval="1d",
+        progress=False,
+        threads=False
+    )
+
+    st.write("Resultado de Yahoo Finance:")
+    st.write(prueba)
+
+except Exception as e:
+    st.error("ERROR REAL:")
+    st.exception(e)
+
 st.markdown(
     """
 ### Plataforma de análisis bursátil
